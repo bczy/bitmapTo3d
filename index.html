@@ -43,7 +43,7 @@
 				document.body.appendChild( renderer.domElement );
 				scene = new THREE.Scene();
 				var img = new Image();
-				img.src = "src/voiture-look-super-mario.jpg";
+				img.src = "src/mario-bros.jpg";
 				img.onload = function(){
 					img.style.width = '300px'
 					img.style.height = 'auto'
@@ -58,7 +58,7 @@
 					var imgdata = ctx.getImageData(0,0,w,h);
 					var rgba = imgdata.data;
 					console.log(rgba.length);
-					var nbPixTile = 16;
+					var nbPixTile = 12;
 					for (var y = 0 ; y < h ; y+= nbPixTile){
 						for (var x = 0 ; x < w ; x += nbPixTile){
 							var r = 0, g = 0, b = 0; 
