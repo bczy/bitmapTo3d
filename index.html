@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	</head>
+	<body style="background-color:#000">
+		<script src="src/three.min.js"></script>
+		<script type="text/javascript" src="src/stats.js"></script>
+		<script>
+			var container, stats;
+			var camera, controls, scene, renderer;
+			var sphere, plane,cubes = [];
+			var start = Date.now();
+			var clock = new THREE.Clock();
+			var f=0;
+			init();
+			animate();
+			
+			function init() {
+				var SCREEN_WIDTH = window.innerWidth,
+				SCREEN_HEIGHT = window.innerHeight,
+				SCREEN_WIDTH_HALF = SCREEN_WIDTH  / 2,
+				SCREEN_HEIGHT_HALF = SCREEN_HEIGHT / 2;
+				var width = window.innerWidth || 2;
+				var height = window.innerHeight || 2;
+				
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				camera = new THREE.PerspectiveCamera( 75, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 100000 );
+				camera.position.y = -150;
+				camera.position.z = 200;
+				camera.position.x = 140;
+				renderer = new THREE.CanvasRenderer();
+				renderer.autoClear = true;
+				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+
+				// STATS
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				stats.domElement.style.zIndex = 100;
+				container.appendChild( stats.domElement );
+
+				document.body.appendChild( renderer.domElement );
+				scene = new THREE.Scene();
+				var img = new Image();
+				img.src = "src/voiture-look-super-mario.jpg";
+				img.onload = function(){
+					img.style.width = '300px'
+					img.style.height = 'auto'
+					var canvas = document.createElement('canvas');
+					var ctx    = canvas.getContext('2d');
+					var w = img.width, h = img.height;
+					canvas.width = w;
+					canvas.height = h;
+					ctx.drawImage( img, 0, 0 );
+					// 3) Read your image data
+					console.log(w + " " + h + " " + canvas.width + " " +canvas.height)
+					var imgdata = ctx.getImageData(0,0,w,h);
+					var rgba = imgdata.data;
+					console.log(rgba.length);
+					var nbPixTile = 16;
+					for (var y = 0 ; y < h ; y+= nbPixTile){
+						for (var x = 0 ; x < w ; x += nbPixTile){
+							var r = 0, g = 0, b = 0; 
+							for (var i = 0 ; i < nbPixTile ; i++){
+								for (var j = 0 ; j < nbPixTile ; j++){
+									r += rgba[(j*4) + (i*w*4) + (x * 4) + (y * w * 4)]; 
+									g += rgba[(j*4) + (i*w*4) + (x * 4) + (y * w * 4) + 1]; 
+									b += rgba[(j*4) + (i*w*4) + (x * 4) + (y * w * 4) + 2];
+								}
+							}
+							r/=nbPixTile*nbPixTile;
+							g/=nbPixTile*nbPixTile;
+							b/=nbPixTile*nbPixTile;
+							if (r+g+b>0 ){
+								var geometry = new THREE.CubeGeometry( nbPixTile - 1, nbPixTile - 1, nbPixTile  / 10 );
+								var beamMaterial = new THREE.MeshBasicMaterial({
+									color: new THREE.Color("0x" +componentToHex(~~(r)) + componentToHex(~~(g)) + componentToHex(~~(b)))
+								});
+								var cube = new THREE.Mesh( geometry, beamMaterial );
+								cube.position.x = x ;
+								cube.position.y = -y ;
+								cubes.push(cube);
+								scene.add(cube);
+							}
+						}
+					}
+				}
+				// LIGHTS
+				pointLight = new THREE.PointLight( 0xffffff );
+				scene.add( pointLight );
+				controls = new THREE.RollControls( camera );
+
+				controls.movementSpeed = 0;
+				controls.lookSpeed = 0;
+			}
+			function componentToHex(c) {
+				var hex = c.toString(16).toUpperCase();
+				return hex.length == 1 ? "0" + hex : hex;
+			}
+			
+			window.onresize = function() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				effect.setSize( window.innerWidth, window.innerHeight );
+				console.log("muf");
+			}
+
+			function animate() {
+				for (var i = 0 ; i < cubes.length ; i++)
+					cubes[i].rotation.y += 0.1;
+				if ( f < 60){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].rotation.y +=0.05;
+						if (f > 20)
+							cubes[i].rotation.x +=0.05;
+						if (f > 40)
+							cubes[i].rotation.z +=0.05;
+					}
+				}
+				else if ( f < 120){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].position.y += Math.cos( i );
+						cubes[i].position.x += Math.sin( i );
+						cubes[i].rotation.y -= 0.05;
+						cubes[i].rotation.x -= 0.05;
+						cubes[i].rotation.z -= 0.05;
+						cubes[i].material.color.r += 0.02;
+						cubes[i].material.color.g += 0.02;
+						cubes[i].material.color.b += 0.02;
+					}
+				}
+				else if ( f < 180){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].position.y -= Math.cos( i );
+						cubes[i].position.x -= Math.sin( i );
+						cubes[i].rotation.y -= 0.05;
+						cubes[i].rotation.x -= 0.05;
+						cubes[i].rotation.z -= 0.05;
+						cubes[i].material.color.r -= 0.02;
+						cubes[i].material.color.g -= 0.02;
+						cubes[i].material.color.b -= 0.02;
+					}
+				}
+				if ( f < 240){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].rotation.y -=0.05;
+						if (f > 260)
+							cubes[i].rotation.x -=0.05;
+						if (f > 280)
+							cubes[i].rotation.z -=0.05;
+					}
+				}
+				else if ( f < 300){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].position.y += Math.sin( i / 10);
+						cubes[i].position.x += Math.cos( i );
+						cubes[i].rotation.y -= 0.05;
+						cubes[i].rotation.x -= 0.05;
+						cubes[i].rotation.z -= 0.05;
+					}
+				}
+				else if ( f < 360){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].position.y -= Math.sin( i / 10);
+						cubes[i].position.x -= Math.cos( i );
+						cubes[i].rotation.y -= 0.05;
+						cubes[i].rotation.x -= 0.05;
+						cubes[i].rotation.z -= 0.05;
+					}
+				}
+				else if ( f < 420){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].position.y -= Math.sin( i );
+						cubes[i].position.z -= Math.sin( i / 10) * 4;
+						cubes[i].rotation.y -= 0.05;
+						cubes[i].rotation.x -= 0.05;
+						cubes[i].rotation.z -= 0.05	;
+						cubes[i].material.color.r += 0.01;
+						cubes[i].material.color.g -= 0.01;
+						cubes[i].material.color.b -= 0.01;
+					}
+				}
+				else if ( f < 480){
+					for (var i = 0 ; i < cubes.length ; i++){
+						cubes[i].position.y += Math.sin( i );
+						cubes[i].position.z += Math.sin( i / 10)  * 4;
+						cubes[i].rotation.y -= 0.05;
+						cubes[i].rotation.x -= 0.05;
+						cubes[i].rotation.z -= 0.05;
+						cubes[i].material.color.r -= 0.01;
+						cubes[i].material.color.g += 0.01;
+						cubes[i].material.color.b += 0.01;
+					}
+				}
+				else if ( f < 540){
+					for (var i = 0 ; i < cubes.length ; i++){
+						  if (i % 2 == 0){
+						    cubes[i].position.x += 1;
+						  }
+						  else{
+						    cubes[i].position.x -= 1;
+						  }
+						  cubes[i].scale.x += 0.005;
+						  cubes[i].scale.y += 0.005;
+					}
+				}
+				else if ( f < 600){
+					for (var i = 0 ; i < cubes.length ; i++){
+						  if (i % 2 == 0){
+						    cubes[i].position.x -= 1;
+						  }
+						  else{
+						    cubes[i].position.x += 1;
+						  }
+						  cubes[i].scale.x -= 0.005;
+						  cubes[i].scale.y -= 0.005;
+					}
+				}
+				else if ( f < 660){
+					if (f == 600)
+					  c=0;
+					for (var i = 0 ; i < cubes.length ; i++){
+					    if (i%2==0){
+						 cubes[i].position.y -= Math.sin(c*0.08)*5;
+						 cubes[i].position.z -= Math.cos(c*0.08)*5;
+					    }
+					    else{
+						 cubes[i].position.y += Math.sin(c*0.08)*5;
+						 cubes[i].position.z += Math.cos(c*0.08)*5;
+					    }
+					}
+					c++;
+				}
+				else if ( f < 720){
+					if (f == 660)
+					  c=0;
+					for (var i = 0 ; i < cubes.length ; i++){
+					    if (i%2==0){
+						 cubes[i].position.y += Math.sin(c*0.08)*5;
+						 cubes[i].position.z += Math.cos(c*0.08)*5;
+					    }
+					    else{
+						 cubes[i].position.y -= Math.sin(c*0.08)*5;
+						 cubes[i].position.z -= Math.cos(c*0.08)*5;
+					    }
+					}
+					c++;
+				}
+				else if ( f < 780){
+					for (var i = cubes.length ; i > 0 ; i--){
+					   cubes[i].position.y += i / cubes.length;
+					}
+				}
+				else{
+					f=0;
+				}
+				stats.update();
+				render();
+				f+=0.5;
+				requestAnimationFrame( animate );
+			}
+			var c=0;
+			function render() {
+				controls.update( clock.getDelta() );
+				renderer.render( scene, camera );
+			}
+		</script>
+	</body>
+</html>
